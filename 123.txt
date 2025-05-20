@@ -1,0 +1,230 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+struct Datainfo
+{
+	int** _ptr;//创建一个二维指针
+
+	string _dataInfo;//创建一个字符串
+	void PrintSelf()
+	{
+		cout << _dataInfo;//输出字符串
+
+		while (_dataInfo.size() < 40)
+		{
+			_dataInfo.append(" ");//在字符串结尾添加空白？？？
+			cout << ' ';
+		}
+		cout << _ptr << endl;//输出二维指针地址
+	}
+
+};
+
+bool GreaterSort(Datainfo& Left, Datainfo& Right)//两个结构体内的指针比大小
+{
+	return Left._ptr < Right._ptr;
+}
+
+std::vector<Datainfo> StructDataInfo;//创建一个vector
+
+typedef void(*FUNC)();// 定义无参函数指针类型
+
+void PrintVTable(int**& VTable)//输入二级指针指向一级指针内的地址
+{
+
+	std::cout << " 虚表函数地址: " << VTable << std::endl;//输出二级指针内一级指针的地址
+	for (int i = 0; (VTable[i]) != NULL; ++i)//指针不等与空则一直循环
+	{
+		__try
+		{
+
+
+			FUNC f = (FUNC)VTable[i];// 获取虚函数地址
+			f();					 // 尝试调用虚函数
+
+
+			printf("<-第%d个虚函数地址: 0X%x,\n", i, VTable[i]);
+		}
+		__except (1)
+		{
+			std::cout << " 虚表函数结束 " << std::endl;  // 捕获异常（如访问越界）
+			break;
+		}
+
+
+	}
+
+	std::cout << std::endl;
+
+}
+
+void PrintAllData()
+{
+	std::cout << "输出所有" << endl;
+	std::sort(StructDataInfo.begin(), StructDataInfo.end(), GreaterSort);
+
+	for (auto var : StructDataInfo)
+	{
+		var.PrintSelf();
+	}
+}
+class Interface_PointA
+{
+public:
+
+	void PrintInterface_PointA()
+	{
+		Datainfo NewData;
+		NewData._dataInfo = "Interface_PointA Start  this is :";//字符串赋值
+		NewData._ptr = (int**)this;//指向对象首地址
+		StructDataInfo.push_back(NewData);//vector push一个字符串和指向对象自己的指针
+
+		NewData._dataInfo = "Interface_PointA _a is :";//字符串赋值
+		NewData._ptr = (int**)&this->_a;			//指针指向对象成员a
+		StructDataInfo.push_back(NewData);//vector push一个字符串和指向对象成员a的指针
+
+	}
+
+	int _a = 0;
+
+	void PrintVPtrTableA()
+	{
+		std::cout << "Interface_PointA的虚表" << std::endl;
+		int** pVptrThird = (int**)(this);//Interface_PointA的虚表
+		int** pVptrThirdResult = (int**)(pVptrThird[0]);
+		PrintVTable(pVptrThirdResult);//对指针进行偏移
+	}
+private:
+	//创建一个虚函数
+	virtual void Interface_PointA_1() {
+		std::cout << " Interface_PointA::Interface_PointA_1 ";
+	}
+	//创建第二个虚函数
+	virtual void BaseFunction() {
+		std::cout << "Interface_PointA:: BaseFunction ";
+	};
+
+
+};
+class Interface_PointB
+{
+public:
+
+	int _b = 0;//B的第一个成员
+
+	void PrintInterface_PointB()
+	{
+		Datainfo NewData;
+		NewData._dataInfo = "Interface_PointB Start  this is :";//对字符串赋值
+		NewData._ptr = (int**)this;								//指针指向对象首地址
+		StructDataInfo.push_back(NewData);						//vector push一个字符串和指向对象自己的指针
+
+		NewData._dataInfo = "Interface_PointB _b is :";//对字符串赋值
+		NewData._ptr = (int**)&this->_b;			//指针指向对象第一个成员的地址
+		StructDataInfo.push_back(NewData);			//vector push一个字符串和指向对象第一个成员的指针
+
+	}
+
+	void PrintVPtrTableB()
+	{
+		std::cout << "Interface_PointB的虚表" << std::endl;
+		int** pVptrThird = (int**)(this);						//Interface_PointB的虚表
+		int** pVptrThirdResult = (int**)(pVptrThird[0]);
+		PrintVTable(pVptrThirdResult);							//对指针进行偏移
+	}
+private:
+	//创建虚函数
+	virtual void Interface_PointB_1() {
+		std::cout << " Interface_PointB::Interface_PointB_1 ";
+	}
+	//创建第二个虚函数
+	virtual void BaseFunction() {
+		std::cout << "Interface_PointB:: BaseFunction ";
+	};
+
+};
+
+class Point3D :public Interface_PointA, public Interface_PointB//继承两个类
+{
+public:
+	void PrintPoint3D()
+	{
+		Datainfo NewData;
+		NewData._dataInfo = "Point3D Start  this is:";//对字符串赋值
+		NewData._ptr = (int**)this;					  //指针指向对象首地址
+		StructDataInfo.push_back(NewData);			  //vector push一个字符串和指向对象自己的指针
+
+
+		NewData._dataInfo = "Point3D Child  &_Point3Data is :";//对字符串赋值
+		NewData._ptr = (int**)&this->_Point3Data;			   //指针指向对象非继承过来的第一个变量首地址
+		StructDataInfo.push_back(NewData);					   //vector push一个字符串和非继承过来的第一个成员首地址指针
+
+		PrintInterface_PointA();								
+		PrintInterface_PointB();
+	}
+
+	void PrintVPtrTablePoint3D()
+	{
+		std::cout << "Point3D的虚表" << std::endl;
+		int** pVptrThird = (int**)(this);					//Point3D的虚表
+		int** pVptrThirdResult = (int**)(pVptrThird[0]);
+		PrintVTable(pVptrThirdResult);						//对指针进行偏移
+	}
+	//对B的虚函数重写
+	virtual void Interface_PointB_1() {
+		std::cout << " Point3D::Interface_PointB_1 ";
+	}
+	//对A的虚函数重写
+	virtual void Interface_PointA_1() {
+		std::cout << " Point3D::Interface_PointA_1 ";
+	}
+
+	void PrintVPtrTable()
+	{
+
+		//Interface_PointB的虚表
+
+		//对指针进行偏移
+		PrintVPtrTableB();
+		//Interface_PointA的虚表
+		//对指针进行偏移
+		PrintVPtrTableA();
+		//Point3D的虚表
+
+		//对指针进行偏移
+		PrintVPtrTablePoint3D();
+	}
+	//创建Point3D_1的第一个虚函数
+	virtual void Point3D_1() {
+		std::cout << " Point3D::Point3D_1 ";
+	}
+	//创建Point3D_1的第二个虚函数
+	virtual void Point3D_2() {
+		std::cout << "Point3D:: Point3D_2 ";
+	}
+	//创建Point3D_1的非继承数据
+	int _Point3Data = 0;
+	//创建Point3D_1的第三个虚函数
+	virtual void BaseFunction() override {
+		std::cout << " Point3D::BaseFunction ";
+	};
+
+};
+
+int main()
+{
+
+	Point3D TestChildInstance = Point3D();
+	
+	TestChildInstance.PrintPoint3D();
+	std::cout << "sizeof(void*) is                 " << sizeof(void*) << std::endl;
+	std::cout << "sizeof(int) is                   " << sizeof(int) << std::endl;
+	std::cout << "sizeof(Point3D) is               " << sizeof(Point3D) << std::endl;
+	PrintAllData();
+	TestChildInstance.PrintVPtrTable();
+	Interface_PointA PointA_1 = Interface_PointA();
+	PointA_1.PrintVPtrTableA();
+	return 0;
+}
