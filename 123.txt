@@ -14,7 +14,7 @@ struct Datainfo
 
 		while (_dataInfo.size() < 40)
 		{
-			_dataInfo.append(" ");//在字符串结尾添加空白？？？
+			_dataInfo.append(" ");//在字符串结尾添加空白
 			cout << ' ';
 		}
 		cout << _ptr << endl;//输出二维指针地址
